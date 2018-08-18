@@ -3,14 +3,10 @@
 // insertOne()
 // updateOne()
 
-// Import MySQL connection.
-const connection = require("../config/connection.js");
+// import MySQL connection
+const connection = require("./connection.js");
 
-// Helper function for SQL syntax.
-// Let's say we want to pass 3 values into the mySQL query.
-// In order to write the query, we need 3 question marks.
-// The above helper function loops through and creates an array of question marks - ["?", "?", "?"] - and turns it into a string.
-// ["?", "?", "?"].toString() => "?,?,?";
+// helper function for MySQL syntax
 function printQuestionMarks(num) {
   let arr = [];
 
@@ -19,9 +15,9 @@ function printQuestionMarks(num) {
   }
 
   return arr.toString();
-}
+};
 
-// Helper function to convert object key/value pairs to SQL syntax
+// helper function converts object value pairs to SQL syntax
 function objToSql(ob) {
   let arr = [];
 
@@ -39,14 +35,14 @@ function objToSql(ob) {
       arr.push(key + "=" + value);
     }
   }
-
   // translate array of strings to a single comma-separated string
   return arr.toString();
-}
+};
 
 // Object for all our SQL statement functions.
-const orm = {
-  all: function(tableInput, cb) {
+let orm = {
+  selectAll: function(tableInput, cb) {
+    // db query to return all
     let queryString = "SELECT * FROM " + tableInput + ";";
     connection.query(queryString, function(err, result) {
       if (err) {
@@ -55,22 +51,46 @@ const orm = {
       cb(result);
     });
   },
-  // An example of objColVals would be {burger_name: bison burger, devoured: true}
-  update: function(table, burgerName, isDevoured, cb) {
-    var queryString = "UPDATE " + table;
+  insert: function(table, cols, vals, cb) {
+		// query that inserts a specific row into the target table
+		let queryString = "INSERT INTO " + table;
 
-    queryString += " SET ";
-    queryString += objToSql(burgerName);
-    queryString += " WHERE ";
-    queryString += isDevoured;
+		queryString += " (";
+		queryString += cols.toString();
+		queryString += ") ";
+		queryString += "VALUES (";
+		queryString += printQuestionMarks(vals.length);
+		queryString += ") ";
+		// console.log(queryString);
 
-    console.log(queryString);
-    connection.query(queryString, function(err, result) {
-      if (err) {
-        throw err;
-      }
+		// run the db query
+		connection.query(queryString, vals, function(err, result) {
+			if (err) {
+				throw err;
+			}
+			cb(result);
+		});
+  },
+  // update single entry
+	update: function(table, objColVals, condition, cb) {
+		// query string to update a single entry in the target table
+		let queryString = "UPDATE " + table;
 
-      cb(result);
-    });
-  }
+		queryString += " SET ";
+		queryString += objToSql(objColVals);
+		queryString += " WHERE ";
+		queryString += condition;
+		// console.log(queryString);
+
+		// run the db query
+		connection.query(queryString, function(err, result) {
+			if (err) {
+				throw err;
+			}
+			cb(result);
+		});
+	}
 };
+
+// export orm object
+module.exports = orm;

@@ -1,24 +1,31 @@
 // wait to attach handlers until DOM is fully loaded
 $(function() {
-  $(".create-burger").on("submit", function(event) {
-    // preventDefault on a submit event
-    event.preventDefault();
 
-    var newBurger = {
-      burger_name: $("#ca").val().trim(),  // need to change #ca to match code
-      // devoured: $("[name=devoured]:checked").val().trim()
-    };
+  let orm = require('../config/orm.js');
 
-    // send POST request
-    $.ajax("/api/burger", {
-      type: "POST",
-      data: newBurger
-    }).then(
-      function() {
-        console.log("created new burger");
-        // reload page to update burgers
-        location.reload();
-      }
-    );
-  });
-}
+  // create a burger object
+  let burger = {
+    // Select all burger table entries
+    selectAll: function(cb) {
+      orm.selectAll('burgers', function(res) {
+        cb(res);
+      });
+    },
+
+    insert: function(cols, vals, cb) {
+      orm.insert('burgers', cols, vals, function(res) {
+        cb(res);
+      });
+    },
+
+    // objColVals specifies columns as object keys with values
+    update: function(objColVals, condition, cb) {
+      orm.update('burgers', objColVals, condition, function(res) {
+        cb(res);
+      });
+    }
+  };
+};
+
+// export for burger_controller.js
+module.exports = burger;
